@@ -89,6 +89,8 @@
 
   <property name="dep.toolchain.avr.local"
             location="${deps.archive}/tools-avr.tgz"/>
+  <property name="dep.toolchain.arm.local"
+            location="${deps.archive}/tools-arm.tgz"/>
 
   <property name="dep.reference.remote"
             value="http://wiring.googlecode.com/files/reference.zip"/>
@@ -178,7 +180,7 @@
        currently resort to platform-specific workaround hacks. -->
 
   <target name="resolve.deps"
-          depends="-resolve.dep.avr,-resolve.dep.reference,platform.-resolve.deps"
+          depends="-resolve.dep.avr,-resolve.dep.arm,-resolve.dep.reference,platform.-resolve.deps"
           description="Handle dependency resolution and retrieval">
   </target>
 
@@ -192,9 +194,20 @@
     <untar src="${dep.toolchain.avr.local}"
            dest="${deps.extract}" compression="gzip"/>
   </target>
+  <target name="-resolve.dep.arm"
+          depends="-check.dep.arm"
+          if="dep.arm.default.ok"
+          unless="exists.dep.arm">
+    <get src="${dep.toolchain.arm.remote}" dest="${dep.toolchain.arm.local}"/>
+    <untar src="${dep.toolchain.arm.local}"
+           dest="${deps.extract}" compression="gzip"/>
+  </target>
 
   <target name="-check.dep.avr" depends="init">
     <available property="exists.dep.avr" file="${dep.toolchain.avr.local}"/>
+  </target>
+  <target name="-check.dep.arm" depends="init">
+    <available property="exists.dep.arm" file="${dep.toolchain.arm.local}"/>
   </target>
 
   <target name="-resolve.dep.reference"

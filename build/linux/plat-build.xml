@@ -28,6 +28,8 @@
   <!-- Dependencies -->
   <property name="dep.toolchain.avr.remote"
             value="http://wiring.googlecode.com/files/tools-avr-linux-i586.tar.gz"/>
+  <property name="dep.toolchain.arm.remote"
+            value="http://static.leaflabs.com/pub/codesourcery/arm-2010q1-188-arm-none-eabi-toolchain-linux32.tar.gz"/>
 
   <!-- =======
        Targets
@@ -62,7 +64,7 @@
     <copy todir="${dist.wiring.dir}" file="${platform.basedir}/dist/wiring"/>
     <chmod perm="ugo+x">
       <fileset dir="${dist.wiring.dir}/tools"
-               includes="**/bin/*,**/libexec/gcc/avr/4.3.5/c*"/>
+               includes="**/bin/*,**/libexec/gcc/avr/4.3.5/c*,**/libexec/gcc/arm/4.4.1/c*"/>
     </chmod>
     <chmod perm="ugo+x" file="${dist.wiring.script}"/>
   </target>
@@ -76,10 +78,10 @@
   <!-- Dependency resolution -->
 
   <target name="-resolve.deps"
-          depends="platform.-resolve.dep.avr">
+          depends="platform.-resolve.dep.avr,platform.-resolve.dep.arm">
   </target>
 
-  <!-- Override AVR toolchain using a real tar, so symlinks work. -->
+  <!-- Override toolchains using a real tar, so symlinks work. -->
   <target name="-resolve.dep.avr"
           depends="init,-check.dep.avr"
           unless="exists.dep.avr">
@@ -87,6 +89,17 @@
     <exec executable="tar" dir="${deps.extract}">
       <arg value="xzf"/>
       <arg value="${dep.toolchain.avr.local}"/>
+    </exec>
+  </target>
+  <target name="-resolve.dep.arm"
+          depends="init,-check.dep.arm"
+          unless="exists.dep.arm">
+    <get src="${dep.toolchain.arm.remote}" dest="${dep.toolchain.arm.local}"/>
+    <exec executable="tar" dir="${deps.extract}">
+      <arg value="xzf"/>
+      <arg value="${dep.toolchain.arm.local}"/>
+      <arg value="-C"/>
+      <arg value="tools"/>
     </exec>
   </target>
 
