@@ -24,7 +24,7 @@
 package processing.app;
 
 import processing.app.debug.AvrdudeUploader;
-import processing.app.debug.Compiler;
+import processing.app.debug.Maker;
 import processing.app.debug.RunnerException;
 import processing.app.debug.Sizer;
 import processing.app.debug.Uploader;
@@ -1081,6 +1081,21 @@ public class Sketch {
     return true;
   }
 
+  /**
+   * Given a folder, return a list of the header files in that folder (but
+   * not the header files in its sub-folders, as those should be included from
+   * within the header files at the top-level).
+   */
+  static public String[] headerListFromIncludePath(String path) {
+    FilenameFilter onlyHFiles = new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".h");
+      }
+    };
+    
+    return (new File(path)).list(onlyHFiles);
+  }
+
 
   /**
    * Add import statements to the current tab for all of packages inside
@@ -1091,7 +1106,7 @@ public class Sketch {
     // make sure the user didn't hide the sketch folder
     ensureExistence();
 
-	  String list[] = Compiler.headerListFromIncludePath(jarPath);
+    String list[] = headerListFromIncludePath(jarPath);
 	  
     // import statements into the main sketch file (code[0])
     // if the current code is a .java file, insert into current
@@ -1373,7 +1388,7 @@ public class Sketch {
 
       if (libFolder != null && !importedLibraries.contains(libFolder)) {
         importedLibraries.add(libFolder);
-        classPath += Compiler.contentsToClassPath(libFolder);
+        classPath += contentsToClassPath(libFolder);
         libraryPath += File.pathSeparator + libFolder.getAbsolutePath();
       }
     }
@@ -1429,6 +1444,52 @@ public class Sketch {
       }
     }
     return primaryClassName;
+  }
+
+  /**
+   * Given a folder, return a list of absolute paths to all jar or zip files
+   * inside that folder, separated by pathSeparatorChar.
+   *
+   * This will prepend a colon (or whatever the path separator is)
+   * so that it can be directly appended to another path string.
+   *
+   * As of 0136, this will no longer add the root folder as well.
+   *
+   * This function doesn't bother checking to see if there are any .class
+   * files in the folder or within a subfolder.
+   */
+  static public String contentsToClassPath(File folder) {
+    if (folder == null) return "";
+    
+    StringBuffer abuffer = new StringBuffer();
+    String sep = System.getProperty("path.separator");
+    
+    try {
+      String path = folder.getCanonicalPath();
+      
+      // When getting the name of this folder, make sure it has a slash
+      // after it, so that the names of sub-items can be added.
+      if (!path.endsWith(File.separator)) {
+        path += File.separator;
+      }
+      
+      String list[] = folder.list();
+      for (int i = 0; i < list.length; i++) {
+        // Skip . and ._ files. Prior to 0125p3, .jar files that had
+        // OS X AppleDouble files associated would cause trouble.
+        if (list[i].startsWith(".")) continue;
+        
+        if (list[i].toLowerCase().endsWith(".jar") ||
+          list[i].toLowerCase().endsWith(".zip")) {
+          abuffer.append(sep);
+          abuffer.append(path);
+          abuffer.append(list[i]);
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();  // this would be odd
+    }
+    return abuffer.toString();
   }
 
   
@@ -1562,10 +1623,10 @@ public class Sketch {
 
     // compile the program. errors will happen as a RunnerException
     // that will bubble up to whomever called build().
-    Compiler compiler = new Compiler();
+    Maker maker = new Maker(this);
     boolean success;
     editor.status.progressUpdate(30);
-    if (compiler.compile(this, buildPath, primaryClassName, verbose)) {
+    if (maker.compile(buildPath, primaryClassName, verbose)) {
       size(buildPath, primaryClassName);
       editor.status.progressUpdate(90);
       return primaryClassName;

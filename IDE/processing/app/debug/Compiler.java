@@ -501,21 +501,6 @@ public class Compiler implements MessageConsumer {
   }
 
 
-  /**
-   * Given a folder, return a list of the header files in that folder (but
-   * not the header files in its sub-folders, as those should be included from
-   * within the header files at the top-level).
-   */
-  static public String[] headerListFromIncludePath(String path) {
-    FilenameFilter onlyHFiles = new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".h");
-      }
-    };
-    
-    return (new File(path)).list(onlyHFiles);
-  }
-
   static public ArrayList<File> findFilesInPath(String path, String extension,
                           boolean recurse) {
     return findFilesInFolder(new File(path), extension, recurse);
@@ -541,59 +526,6 @@ public class Compiler implements MessageConsumer {
     return files;
   }
   
-
-  ///
-
-
-  /**
-   * Given a folder, return a list of absolute paths to all jar or zip files
-   * inside that folder, separated by pathSeparatorChar.
-   *
-   * This will prepend a colon (or whatever the path separator is)
-   * so that it can be directly appended to another path string.
-   *
-   * As of 0136, this will no longer add the root folder as well.
-   *
-   * This function doesn't bother checking to see if there are any .class
-   * files in the folder or within a subfolder.
-   */
-  static public String contentsToClassPath(File folder) {
-    if (folder == null) return "";
-    
-    StringBuffer abuffer = new StringBuffer();
-    String sep = System.getProperty("path.separator");
-    
-    try {
-      String path = folder.getCanonicalPath();
-      
-      // When getting the name of this folder, make sure it has a slash
-      // after it, so that the names of sub-items can be added.
-      if (!path.endsWith(File.separator)) {
-        path += File.separator;
-      }
-      
-      String list[] = folder.list();
-      for (int i = 0; i < list.length; i++) {
-        // Skip . and ._ files. Prior to 0125p3, .jar files that had
-        // OS X AppleDouble files associated would cause trouble.
-        if (list[i].startsWith(".")) continue;
-        
-        if (list[i].toLowerCase().endsWith(".jar") ||
-          list[i].toLowerCase().endsWith(".zip")) {
-          abuffer.append(sep);
-          abuffer.append(path);
-          abuffer.append(list[i]);
-        }
-      }
-    } catch (IOException e) {
-      e.printStackTrace();  // this would be odd
-    }
-    return abuffer.toString();
-  }
-  
-  
-
-
   /**
    * A classpath, separated by the path separator, will contain
    * a series of .jar/.zip files or directories containing .class
@@ -656,6 +588,67 @@ public class Compiler implements MessageConsumer {
     } catch (IOException e) {
       System.err.println("Ignoring " + filename + " (" + e.getMessage() + ")");
     }
+  }
+
+  /**
+   * Given a folder, return a list of the header files in that folder (but
+   * not the header files in its sub-folders, as those should be included from
+   * within the header files at the top-level).
+   */
+  static public String[] headerListFromIncludePath(String path) {
+    FilenameFilter onlyHFiles = new FilenameFilter() {
+      public boolean accept(File dir, String name) {
+        return name.endsWith(".h");
+      }
+    };
+    
+    return (new File(path)).list(onlyHFiles);
+  }
+
+  /**
+   * Given a folder, return a list of absolute paths to all jar or zip files
+   * inside that folder, separated by pathSeparatorChar.
+   *
+   * This will prepend a colon (or whatever the path separator is)
+   * so that it can be directly appended to another path string.
+   *
+   * As of 0136, this will no longer add the root folder as well.
+   *
+   * This function doesn't bother checking to see if there are any .class
+   * files in the folder or within a subfolder.
+   */
+  static public String contentsToClassPath(File folder) {
+    if (folder == null) return "";
+    
+    StringBuffer abuffer = new StringBuffer();
+    String sep = System.getProperty("path.separator");
+    
+    try {
+      String path = folder.getCanonicalPath();
+      
+      // When getting the name of this folder, make sure it has a slash
+      // after it, so that the names of sub-items can be added.
+      if (!path.endsWith(File.separator)) {
+        path += File.separator;
+      }
+      
+      String list[] = folder.list();
+      for (int i = 0; i < list.length; i++) {
+        // Skip . and ._ files. Prior to 0125p3, .jar files that had
+        // OS X AppleDouble files associated would cause trouble.
+        if (list[i].startsWith(".")) continue;
+        
+        if (list[i].toLowerCase().endsWith(".jar") ||
+          list[i].toLowerCase().endsWith(".zip")) {
+          abuffer.append(sep);
+          abuffer.append(path);
+          abuffer.append(list[i]);
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();  // this would be odd
+    }
+    return abuffer.toString();
   }
   
   

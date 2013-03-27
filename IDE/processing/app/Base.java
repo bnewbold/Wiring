@@ -1839,6 +1839,11 @@ public class Base {
     File.separator + "avr" + File.separator + "bin" + File.separator;
   }
 
+  static public String getARMBasePath() {    
+    return getToolsPath() +  
+    File.separator + "arm" + File.separator + "bin" + File.separator;
+  }
+
   
   static public Target getTarget() {
     return Base.targetsTable.get(Preferences.get("target"));
